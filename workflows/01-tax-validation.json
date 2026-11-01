@@ -1,0 +1,545 @@
+{
+  "name": "Shlomi ERP - 01 - Tax Validation",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF1 · אימות מסמכי מס → תור הפקה\nשרשרת אירועים: האפליקציה יוצרת חשבונית → WF13 קורא ל-WF1 → בדיקת תקינות, מע\"מ (18%, 17% לפני 2025), מספר רץ INV-0001, סטטוס Ready → WF1 קורא ל-WF8 שמפיק את המסמך. חשבונית לא תקינה מסומנת Invalid (טיפול בשגיאה מקומי). בלי שעון ובלי סריקה: 0 קריאות במנוחה.",
+        "height": 130,
+        "width": 1000,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -260
+      ],
+      "name": "Note 0",
+      "id": "28abe9de-c43c-51be-a07f-2a4fc691af6d"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "name": "Invoice Created",
+      "id": "35a7d12b-942d-4cd4-ab09-8e8df584f844"
+    },
+    {
+      "parameters": {
+        "content": "### Invoice Created\nמופעל על ידי WF13 ברגע שהאפליקציה יוצרת חשבונית (Execute Workflow). מקבל את הרשומה כפי ש-Airtable החזיר אותה. אין סריקה מחזורית ואין קריאות ל-Airtable כשאין חשבוניות.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -210
+      ],
+      "name": "Note 2",
+      "id": "7e69ae33-7362-5951-855f-1f0c2ee607de"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "05dc5c20-a740-5b42-8484-9fe1f7c88dc7",
+              "leftValue": "={{ $json.fields.Amount }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "3f6c903f-35e8-5947-a3cc-17b82d78b640",
+              "leftValue": "={{ $json.fields.CustomerId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        280,
+        0
+      ],
+      "name": "Valid?",
+      "id": "6d7de775-4c14-5e8c-bf68-b071c1a8d054"
+    },
+    {
+      "parameters": {
+        "content": "### Valid?\nבדיקת תקינות: Amount > 0 וגם CustomerId לא ריק. true → המשך. false → Invalid.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -210
+      ],
+      "name": "Note 4",
+      "id": "7918c291-011e-55ac-9d25-ceec69f54103"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "__TBL_INVOICES__",
+          "mode": "id"
+        },
+        "filterByFormula": "={InvoiceNumber}!=''",
+        "returnAll": false,
+        "limit": 1,
+        "sort": {
+          "property": [
+            {
+              "field": "InvoiceNumber",
+              "direction": "desc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        0
+      ],
+      "name": "Last Invoice Number",
+      "id": "d0b25ad7-8748-5507-94b0-0cde25ef7da4",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "content": "### Last Invoice Number\nשולף את החשבונית עם המספר הגבוה ביותר. הבסיס למספור העוקב. אם אין אף אחת, ממשיכים (Continue on error) ומתחילים מ-INV-0001.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        -210
+      ],
+      "name": "Note 6",
+      "id": "593d0afb-5a2b-5635-8d54-ecc959314fa2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3ac79784-80a2-5200-9efb-6d54e853a748",
+              "name": "rate",
+              "type": "number",
+              "value": "={{ new Date($('Invoice Created').item.json.fields.Created) >= new Date('2025-01-01') ? 0.18 : 0.17 }}"
+            },
+            {
+              "id": "1cfe52bc-c5e8-5883-9116-89de82259953",
+              "name": "VatAmount",
+              "type": "number",
+              "value": "={{ Math.round(Number($('Invoice Created').item.json.fields.Amount) * (new Date($('Invoice Created').item.json.fields.Created) >= new Date('2025-01-01') ? 0.18 : 0.17) * 100) / 100 }}"
+            },
+            {
+              "id": "07bd4d13-cd0e-5ac5-96d9-8cd244f2d285",
+              "name": "Total",
+              "type": "number",
+              "value": "={{ Math.round((Number($('Invoice Created').item.json.fields.Amount) + Math.round(Number($('Invoice Created').item.json.fields.Amount) * (new Date($('Invoice Created').item.json.fields.Created) >= new Date('2025-01-01') ? 0.18 : 0.17) * 100) / 100) * 100) / 100 }}"
+            },
+            {
+              "id": "23c663a6-7db6-5fee-b060-bd92aa60395e",
+              "name": "InvoiceNumber",
+              "type": "string",
+              "value": "={{ 'INV-' + ((parseInt((($json.fields || {}).InvoiceNumber || 'INV-0000').split('-')[1]) || 0) + 1).toString().padStart(4, '0') }}"
+            },
+            {
+              "id": "ddc356ff-b523-4a14-adae-f26ded323e57",
+              "name": "DocType",
+              "type": "string",
+              "value": "={{ $('Invoice Created').item.json.fields.DocType || 'חשבונית מס' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        840,
+        0
+      ],
+      "name": "Compute VAT",
+      "id": "0c466980-f4f2-58d8-a83d-2248b321e4cb"
+    },
+    {
+      "parameters": {
+        "content": "### Compute VAT\nחישוב מע\"מ: 18% (17% לפני 1.1.2025), VatAmount, Total ומספר עוקב INV-0000. הכל כמספרים, לא מחרוזות.\nסוג המסמך (חשבונית מס / קבלה / חשבונית) מגיע מהטופס; אם חסר, ברירת המחדל חשבונית מס.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        -210
+      ],
+      "name": "Note 8",
+      "id": "9a61cd30-f72d-54ff-acd1-77731fe46236"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "__TBL_INVOICES__",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Invoice Created').item.json.id }}",
+            "InvoiceNumber": "={{ $json.InvoiceNumber }}",
+            "VatAmount": "={{ $json.VatAmount }}",
+            "Total": "={{ $json.Total }}",
+            "Status": "Ready",
+            "DocType": "={{ $json.DocType }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "InvoiceNumber",
+              "displayName": "InvoiceNumber",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "VatAmount",
+              "displayName": "VatAmount",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Total",
+              "displayName": "Total",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "DocType",
+              "displayName": "DocType",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        0
+      ],
+      "name": "Save & Mark Ready",
+      "id": "9ed41997-7204-5107-b151-85211e7132a8",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Save & Mark Ready\nענף true: כותב מספר, מע\"מ וסה\"כ, ומסמן Status = Ready. WF8 יקלוט מכאן.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -210
+      ],
+      "name": "Note 10",
+      "id": "84f9a9f1-f225-54d8-8c4c-5e46f239e767"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "__TBL_INVOICES__",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Invoice Created').item.json.id }}",
+            "Status": "Invalid"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        260
+      ],
+      "name": "Mark Invalid",
+      "id": "67ad05a8-19a0-5d02-8df4-93f4668de498",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Mark Invalid\nענף false (טיפול שגיאה): חשבונית ללא סכום או ללא לקוח מסומנת Invalid ולא נכנסת לתור.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        370
+      ],
+      "name": "Note 12",
+      "id": "92379bdc-7cd2-5e53-adcd-5207cf033dde"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "__WF_ID_08__",
+          "mode": "id"
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1400,
+        0
+      ],
+      "name": "Make Invoice Document",
+      "id": "66d2eb47-915d-405a-85a7-5939064a1e29"
+    },
+    {
+      "parameters": {
+        "content": "### Make Invoice Document\nקורא ל-WF8 (Execute Workflow, בלי להמתין) מיד אחרי שהחשבונית סומנה Ready. כך המסמך מופק תוך שניות, בלי סריקה כל דקה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1380,
+        -210
+      ],
+      "name": "Note 14",
+      "id": "a63a4b83-39ea-4f64-85fa-44068a87ae46"
+    }
+  ],
+  "connections": {
+    "Valid?": {
+      "main": [
+        [
+          {
+            "node": "Last Invoice Number",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Last Invoice Number": {
+      "main": [
+        [
+          {
+            "node": "Compute VAT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute VAT": {
+      "main": [
+        [
+          {
+            "node": "Save & Mark Ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invoice Created": {
+      "main": [
+        [
+          {
+            "node": "Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save & Mark Ready": {
+      "main": [
+        [
+          {
+            "node": "Make Invoice Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

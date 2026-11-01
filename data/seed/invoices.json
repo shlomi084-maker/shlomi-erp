@@ -1,0 +1,44 @@
+[
+  {
+    "InvoiceNumber": "INV-0001",
+    "CustomerId": "CUST-0001",
+    "Amount": 2490,
+    "Status": "Paid",
+    "DocType": "חשבונית מס"
+  },
+  {
+    "InvoiceNumber": "INV-0002",
+    "CustomerId": "CUST-0002",
+    "Amount": 8990,
+    "Status": "Paid",
+    "DocType": "חשבונית מס"
+  },
+  {
+    "InvoiceNumber": "INV-0003",
+    "CustomerId": "CUST-0001",
+    "Amount": 1249,
+    "Status": "Paid",
+    "DocType": "קבלה"
+  },
+  {
+    "InvoiceNumber": "INV-0004",
+    "CustomerId": "CUST-0003",
+    "Amount": 15600,
+    "Status": "Issued",
+    "DocType": "חשבונית מס"
+  },
+  {
+    "InvoiceNumber": "INV-0005",
+    "CustomerId": "CUST-0004",
+    "Amount": 3580,
+    "Status": "Issued",
+    "DocType": "חשבונית"
+  },
+  {
+    "InvoiceNumber": "",
+    "CustomerId": "",
+    "Amount": 0,
+    "Status": "Invalid",
+    "DocType": "חשבונית מס"
+  }
+]

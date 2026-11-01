@@ -1,0 +1,568 @@
+{
+  "name": "Shlomi ERP - 02 - Leads Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF2 · קליטת לידים וסינון כפילויות\nנקודת הכניסה של לידים מהאתר / מהאפליקציה: POST עם name, email, phone, company, interest. בודק שיש אימייל (אחרת 400), מחפש כפילות לפי אימייל, יוצר רשומה רק אם הליד חדש, שולח לבעלים מייל התראה, ומחזיר תשובת JSON.",
+        "height": 130,
+        "width": 1000,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -260
+      ],
+      "name": "Note 0",
+      "id": "6e609045-7277-502e-87e0-30a2749b9def"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "name": "Lead Webhook",
+      "id": "fbec4610-a353-508d-80a4-9af79acc777a",
+      "webhookId": "e85fe359-bde0-52c7-9063-8d66cc584648"
+    },
+    {
+      "parameters": {
+        "content": "### Lead Webhook\nPOST /webhook/lead. גוף הבקשה: { name, email, phone, company, interest }. CORS פתוח כדי שטופס באתר יוכל לשלוח ישירות.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -210
+      ],
+      "name": "Note 2",
+      "id": "8b065094-9bcd-54c6-a0a0-dc4ce47971bd"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bd4a1dfa-2b1a-5e51-99d0-22eec2011a20",
+              "leftValue": "={{ $json.body.email }}",
+              "rightValue": "@",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        280,
+        0
+      ],
+      "name": "Has Email?",
+      "id": "cf0efe38-7e01-50a6-96c9-f279761ad471"
+    },
+    {
+      "parameters": {
+        "content": "### Has Email?\nטיפול שגיאה: בלי אימייל תקין אין ליד. false → תשובת 400 לשולח.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -210
+      ],
+      "name": "Note 4",
+      "id": "d59250f8-eb89-5b10-a4ce-5b5741c1fad0"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "__TBL_LEADS__",
+          "mode": "id"
+        },
+        "filterByFormula": "=LOWER({Email})=\"{{ $json.body.email.toLowerCase().trim() }}\"",
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        0
+      ],
+      "name": "Find Existing",
+      "id": "77971708-cfae-529b-b2e1-aa46184685a8",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "content": "### Find Existing\nמחפש ב-Leads רשומה עם אותו אימייל (לא תלוי רישיות). מוגבל לתוצאה אחת.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        -210
+      ],
+      "name": "Note 6",
+      "id": "eae44ccf-6942-5d22-9692-d4a7d416b48a"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "85759e47-cef5-5c06-9d7a-8325b942cdfd",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        840,
+        0
+      ],
+      "name": "New Lead?",
+      "id": "d62feb0d-5edc-5de7-86ba-7fc4a65e4f96"
+    },
+    {
+      "parameters": {
+        "content": "### New Lead?\nלא נמצא id → ליד חדש → יצירה. נמצא → כפילות → עונים duplicate בלי ליצור.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        -210
+      ],
+      "name": "Note 8",
+      "id": "48017d25-92cd-5d66-b506-e2fad3697ffb"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "__TBL_LEADS__",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('Lead Webhook').first().json.body.name }}",
+            "Email": "={{ $('Lead Webhook').first().json.body.email.toLowerCase().trim() }}",
+            "Phone": "={{ $('Lead Webhook').first().json.body.phone || '' }}",
+            "Company": "={{ $('Lead Webhook').first().json.body.company || '' }}",
+            "Interest": "={{ $('Lead Webhook').first().json.body.interest || '' }}",
+            "Status": "New"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Interest",
+              "displayName": "Interest",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        0
+      ],
+      "name": "Create Lead",
+      "id": "f1bd3c1e-16df-5be8-b27d-0ba6c645b490",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Create Lead\nיוצר רשומת ליד עם Status = New. WF3 ישלח לו מייל קר בריצה הבאה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -210
+      ],
+      "name": "Note 10",
+      "id": "aa485cca-479e-50f1-9855-bf610f7afd8a"
+    },
+    {
+      "parameters": {
+        "sendTo": "__OWNER_EMAIL__",
+        "subject": "=ליד חדש: {{ $json.fields.Name }} ({{ $json.fields.Company || 'פרטי' }})",
+        "emailType": "text",
+        "message": "=התקבל ליד חדש במערכת Shlomi ERP:\n\nשם: {{ $json.fields.Name }}\nאימייל: {{ $json.fields.Email }}\nטלפון: {{ $json.fields.Phone }}\nחברה: {{ $json.fields.Company }}\nתחום עניין: {{ $json.fields.Interest }}\n\nהליד נשמר ב-Airtable בסטטוס New. סוכן המכירות ישלח מייל פתיחה בריצה הבאה.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1400,
+        0
+      ],
+      "name": "Notify Owner",
+      "id": "ef1d2bed-d6ae-5cdc-b2e9-707b4f5e8fa7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__CRED_GMAIL__",
+          "name": "Gmail account"
+        }
+      },
+      "webhookId": "b184fb9f-e1db-50f9-b839-011f713e7792",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "### Notify Owner\nמייל התראה לבעלים עם פרטי הליד. Continue on error: אם Gmail נכשל, הליד כבר נשמר והתשובה לשולח עדיין חוזרת.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1380,
+        -210
+      ],
+      "name": "Note 12",
+      "id": "ce162d54-fcff-5eac-bd34-7d8f88cc82bd"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"created\": true, \"id\": $('Create Lead').first().json.id } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1680,
+        0
+      ],
+      "name": "Respond Created",
+      "id": "150985ed-e505-5d97-88c2-6ce07be71398"
+    },
+    {
+      "parameters": {
+        "content": "### Respond Created\nמחזיר לאתר/לאפליקציה JSON עם המזהה של הליד החדש.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1660,
+        -210
+      ],
+      "name": "Note 14",
+      "id": "5188c073-96f3-544e-8d6a-bfdd6328a7db"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"created\": false, \"reason\": \"duplicate\", \"id\": $json.id } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        260
+      ],
+      "name": "Respond Duplicate",
+      "id": "73228489-7009-5b03-bbb8-644434595a9f"
+    },
+    {
+      "parameters": {
+        "content": "### Respond Duplicate\nליד קיים: תשובה תקינה בלי יצירה כפולה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        370
+      ],
+      "name": "Note 16",
+      "id": "952b2ebe-0701-5aa0-a59d-7ca3725b4b67"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": false, \"error\": \"email is required\" } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        560,
+        260
+      ],
+      "name": "Respond 400",
+      "id": "fc05b98b-8b8d-5c41-b416-d261790d2209"
+    },
+    {
+      "parameters": {
+        "content": "### Respond 400\nטיפול שגיאה: בקשה בלי אימייל מקבלת 400.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        370
+      ],
+      "name": "Note 18",
+      "id": "77a7961f-dfff-524f-88f7-ee2fc6a65aa9"
+    }
+  ],
+  "connections": {
+    "Lead Webhook": {
+      "main": [
+        [
+          {
+            "node": "Has Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Email?": {
+      "main": [
+        [
+          {
+            "node": "Find Existing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Existing": {
+      "main": [
+        [
+          {
+            "node": "New Lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Lead?": {
+      "main": [
+        [
+          {
+            "node": "Create Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Lead": {
+      "main": [
+        [
+          {
+            "node": "Notify Owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Owner": {
+      "main": [
+        [
+          {
+            "node": "Respond Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

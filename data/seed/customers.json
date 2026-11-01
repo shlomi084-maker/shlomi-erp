@@ -1,0 +1,34 @@
+[
+  {
+    "CustomerId": "CUST-0001",
+    "Name": "סטודיו לוי עיצוב",
+    "Email": "__OWNER_EMAIL_PLUS__cust-0001",
+    "Phone": "052-1234567",
+    "Company": "סטודיו לוי עיצוב",
+    "Notes": "לקוח חוזר, מסכים ומחשבים"
+  },
+  {
+    "CustomerId": "CUST-0002",
+    "Name": "כהן הנדסה בע\"מ",
+    "Email": "__OWNER_EMAIL_PLUS__cust-0002",
+    "Phone": "054-7654321",
+    "Company": "כהן הנדסה בע\"מ",
+    "Notes": "8 עמדות עבודה"
+  },
+  {
+    "CustomerId": "CUST-0003",
+    "Name": "קפה שמש",
+    "Email": "__OWNER_EMAIL_PLUS__cust-0003",
+    "Phone": "053-1112222",
+    "Company": "קפה שמש",
+    "Notes": "רמקולים לבית קפה, שוטף+30"
+  },
+  {
+    "CustomerId": "CUST-0004",
+    "Name": "פרידמן ושות' רואי חשבון",
+    "Email": "__OWNER_EMAIL_PLUS__cust-0004",
+    "Phone": "058-3334444",
+    "Company": "פרידמן ושות'",
+    "Notes": "טאבלטים לפגישות"
+  }
+]

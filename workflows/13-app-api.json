@@ -1,0 +1,905 @@
+{
+  "name": "Shlomi ERP - 13 - App API",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF13 · ה-API של אפליקציית הניהול (Lovable)\nנקודת קצה אחת לאפליקציה: POST { action, table, payload, filter, message }. Switch לפי action: read (שליפה מטבלה), create (יצירת רשומה), update (עדכון לפי id), chat (סוכן עוזר). פעולה לא מוכרת → 400. ה-PAT של Airtable נשאר ב-n8n ולעולם לא מגיע לדפדפן.",
+        "height": 130,
+        "width": 1000,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -260
+      ],
+      "name": "Note 0",
+      "id": "450425f6-8ee0-512a-b5d6-4d5815ccfc06"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "app",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "name": "App Webhook",
+      "id": "92ff619b-df9e-5aff-a672-0b17ed5707b5",
+      "webhookId": "49534583-010e-5d8e-9698-fda26e15d550"
+    },
+    {
+      "parameters": {
+        "content": "### App Webhook\nPOST /webhook/app. CORS פתוח כדי שהאפליקציה תוכל לקרוא ישירות מהדפדפן.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -210
+      ],
+      "name": "Note 2",
+      "id": "738a666f-1f9a-5bb9-abca-1ec7e13ecb9f"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "545f2e37-05cb-5722-8414-96a5c8a772e3",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "read",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "read"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6bc3da24-0cd4-5eac-ac3f-77b4ae2da9db",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "create",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "create"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "364a9c97-8541-5956-9717-181b9fb89606",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "update",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "update"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6c040b6e-8ff3-5883-9179-68c296988635",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "chat",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "chat"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        280,
+        0
+      ],
+      "name": "Route by Action",
+      "id": "ec7f22e6-e691-50fc-80ae-b3affff0f497"
+    },
+    {
+      "parameters": {
+        "content": "### Route by Action\nמפצל ל-4 מסלולים לפי body.action. פלט Fallback לפעולה לא מוכרת → 400.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -210
+      ],
+      "name": "Note 4",
+      "id": "9a582f0e-59e8-5edd-b905-7e56244265ad"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ $json.body.table }}",
+          "mode": "id"
+        },
+        "filterByFormula": "={{ $json.body.filter || 'TRUE()' }}",
+        "returnAll": false,
+        "limit": "={{ $json.body.limit || 100 }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        -200
+      ],
+      "name": "Read Records",
+      "id": "f1d6e218-cd75-5cbf-ada9-c903b4cc469d",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "content": "### Read Records\nread: שולף מהטבלה שב-body.table (שם הטבלה), עם filter אופציונלי בנוסחת Airtable.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        -410
+      ],
+      "name": "Note 6",
+      "id": "f2eb17a9-dfea-591e-819e-bfb4b9e0a3de"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        840,
+        -200
+      ],
+      "name": "Collect Read",
+      "id": "2adabd85-d35c-53b9-9e2e-53a41ad98729"
+    },
+    {
+      "parameters": {
+        "content": "### Collect Read\nאורז את כל הרשומות למערך אחד: { data: [...] }.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        -410
+      ],
+      "name": "Note 8",
+      "id": "a918c564-fd03-5d05-97c3-6571ff28867c"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ $json.body.payload }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        0
+      ],
+      "name": "Unwrap Create",
+      "id": "561942dd-4a6b-5909-865b-197e58550db4"
+    },
+    {
+      "parameters": {
+        "content": "### Unwrap Create\ncreate: פורס את body.payload לשדות עליונים.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        -210
+      ],
+      "name": "Note 10",
+      "id": "0750362f-616e-5965-88ff-73afac971aee"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ $('App Webhook').first().json.body.table }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "schema": [],
+          "matchingColumns": [],
+          "attemptToConvertTypes": true,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        840,
+        0
+      ],
+      "name": "Create Record",
+      "id": "ffe4a25b-8745-5a90-a872-406e671ea1e1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Create Record\nיוצר רשומה (Auto-map). יצירת חשבונית כאן מפעילה את WF1 → WF8.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        -210
+      ],
+      "name": "Note 12",
+      "id": "e9447645-f6fd-5cde-af33-0df9a69b7d42"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ $json.body.payload }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        200
+      ],
+      "name": "Unwrap Update",
+      "id": "18915a15-c1b6-5c6f-a362-c42e8a8b16cc"
+    },
+    {
+      "parameters": {
+        "content": "### Unwrap Update\nupdate: body.payload חייב לכלול id.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        310
+      ],
+      "name": "Note 14",
+      "id": "c99b962a-3903-5bdb-856b-26e89057decb"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ $('App Webhook').first().json.body.table }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "schema": [],
+          "matchingColumns": [
+            "id"
+          ],
+          "attemptToConvertTypes": true,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        840,
+        200
+      ],
+      "name": "Update Record",
+      "id": "78686509-5ce6-5810-8a6d-f1637ddba488",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Update Record\nמעדכן לפי id (למשל סימון חשבונית Paid או משימה Done).",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        310
+      ],
+      "name": "Note 16",
+      "id": "8c06370d-d3b3-5412-a938-49d8c83dea45"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
+        "options": {
+          "systemMessage": "אתה העוזר החכם בתוך אפליקציית הניהול של Shlomi Electronics (שלומי אלקטרוניקה), חנות אלקטרוניקה ישראלית קטנה. המשתמש הוא בעל העסק.\n\nענה בעברית, קצר, ענייני ומדויק, כשותף עסקי.\n\nמה אתה יודע לעשות:\n- להסביר איך המערכת עובדת: לידים (New → Contacted → Replied), חשבוניות (Ready → Issued → Paid), מוצרים, משימות, ה-workflows של n8n.\n- לעזור בניסוח: מיילים ללקוחות, תיאורי מוצר, תשובות ללקוחות, לפי מדיניות החברה.\n- לתת כיוון כללי בנושאי מע\"מ (18%) וחשבוניות בישראל, ולהמליץ להתייעץ עם רואה חשבון בשאלות מורכבות.\n\nמגבלות:\n- אין לך גישה לנתונים בזמן אמת. לשאלות על מספרים ורשומות, הפנה למסכי האפליקציה או לבוט המנהל בטלגרם.\n- אל תמציא נתונים, מחירים, סכומים או סטטוסים."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        560,
+        400
+      ],
+      "name": "AI Agent",
+      "id": "758e6d22-f109-510e-a061-459a74e15690",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "### AI Agent\nchat: עוזר ה-ERP בתוך האפליקציה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        510
+      ],
+      "name": "Note 18",
+      "id": "d834ae63-bc2a-5549-a221-5cabf65d4e11"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        620
+      ],
+      "name": "Gemini Chat Model",
+      "id": "04d72b89-d563-5ed0-b538-41b10d7ed916",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "__CRED_GEMINI__",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ { \"reply\": $json.output } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        840,
+        400
+      ],
+      "name": "Wrap Reply",
+      "id": "3427d3dd-04ee-5344-a9ae-f289f3f9169d"
+    },
+    {
+      "parameters": {
+        "content": "### Wrap Reply\nמחזיר { reply } כפי שהאפליקציה מצפה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        510
+      ],
+      "name": "Note 21",
+      "id": "2beb4b28-2c3f-58a0-a958-239a432f4372"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ { \"reply\": \"מצטער, יש תקלה זמנית בעוזר. נסה שוב בעוד רגע.\" } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        840,
+        560
+      ],
+      "name": "Wrap Reply Error",
+      "id": "c92f9e05-b0d8-5c3b-9844-405c383ac14b"
+    },
+    {
+      "parameters": {
+        "content": "### Wrap Reply Error\nטיפול שגיאה: תקלת מודל → תשובה מנומסת במקום 500.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        670
+      ],
+      "name": "Note 23",
+      "id": "5978a877-d701-5551-bcf8-3391ca32fcfe"
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1700,
+        100
+      ],
+      "name": "Respond",
+      "id": "19a28025-506c-582e-b2a3-aba7b97bf9b8"
+    },
+    {
+      "parameters": {
+        "content": "### Respond\nמחזיר לאפליקציה את הפריט הראשון כ-JSON.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        -110
+      ],
+      "name": "Note 25",
+      "id": "29d1c31f-5762-5579-949b-fff0c0e32d8f"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": false, \"error\": \"unknown action. use read | create | update | chat\" } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        560,
+        800
+      ],
+      "name": "Respond 400",
+      "id": "8e9fbdb3-5d20-5622-ad32-4bad99ffcf3a"
+    },
+    {
+      "parameters": {
+        "content": "### Respond 400\nטיפול שגיאה: action לא מוכר.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        910
+      ],
+      "name": "Note 27",
+      "id": "bd2ca26f-0b60-56d6-aea3-275e41cc162c"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a0db916d-156f-4be4-9db8-61f706792469",
+              "leftValue": "={{ $('App Webhook').first().json.body.table }}",
+              "rightValue": "Invoices",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        0
+      ],
+      "name": "Is Invoice?",
+      "id": "c1845b75-3c18-4f3e-8925-4a276556d7c6"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "__WF_ID_01__",
+          "mode": "id"
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1400,
+        -120
+      ],
+      "name": "Validate Invoice",
+      "id": "8b3c5562-096a-43cb-a502-22099b37fed4"
+    },
+    {
+      "parameters": {
+        "content": "### Is Invoice?\nאם הרשומה שנוצרה היא חשבונית, מפעילים את שרשרת המס. כל טבלה אחרת עוברת ישר לתשובה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -210
+      ],
+      "name": "Note 20",
+      "id": "d76d459d-6386-478d-bcb3-26766d81fe92"
+    },
+    {
+      "parameters": {
+        "content": "### Validate Invoice\nקורא ל-WF1 (Execute Workflow, בלי להמתין): מע\"מ, מספר רץ, Ready, ומשם WF8 מפיק את המסמך. האפליקציה מקבלת תשובה מיד. זה מחליף סריקה של Airtable כל דקה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1380,
+        -330
+      ],
+      "name": "Note 50",
+      "id": "3dbb86a4-6976-4d95-9a18-fceae9cbe1df"
+    }
+  ],
+  "connections": {
+    "Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "App Webhook": {
+      "main": [
+        [
+          {
+            "node": "Route by Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Action": {
+      "main": [
+        [
+          {
+            "node": "Read Records",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unwrap Create",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unwrap Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Records": {
+      "main": [
+        [
+          {
+            "node": "Collect Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Read": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unwrap Create": {
+      "main": [
+        [
+          {
+            "node": "Create Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Record": {
+      "main": [
+        [
+          {
+            "node": "Is Invoice?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unwrap Update": {
+      "main": [
+        [
+          {
+            "node": "Update Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Record": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Wrap Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wrap Reply Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wrap Reply": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wrap Reply Error": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Invoice?": {
+      "main": [
+        [
+          {
+            "node": "Validate Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Invoice": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

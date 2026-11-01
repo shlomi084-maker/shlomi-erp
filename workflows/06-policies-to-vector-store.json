@@ -1,0 +1,247 @@
+{
+  "name": "Shlomi ERP - 06 - Policies to Vector Store",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF6 · מדיניות → מאגר וקטורי (ידני)\nטופס העלאה: בוחרים את קבצי המדיניות (policies/*.md), הם נחתכים לקטעים של ~1000 תווים, מומרים ל-embeddings ונשמרים במאגר הווקטורי בזיכרון תחת המפתח mypolicies. מריצים ידנית פעם אחת, ושוב אחרי כל הפעלה מחדש של n8n (המאגר בזיכרון).",
+        "height": 130,
+        "width": 1000,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -260
+      ],
+      "name": "Note 0",
+      "id": "abbcc57e-abb5-5e3a-81df-0df5dc3a4fbe"
+    },
+    {
+      "parameters": {
+        "path": "policies-upload",
+        "formTitle": "Shlomi ERP — העלאת מסמכי מדיניות",
+        "formDescription": "בחרו את כל קבצי ה-Markdown מתיקיית policies. הם ייכנסו למאגר הידע של סוכן שירות הלקוחות.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "File",
+              "fieldType": "file",
+              "multipleFiles": true,
+              "acceptFileTypes": ".md,.txt",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "name": "Upload Policies Form",
+      "id": "1c16f194-b4b2-5b7f-b7d9-cbe65039cb42",
+      "webhookId": "53f9190e-b549-5cf8-9cac-6c227aaa4b97"
+    },
+    {
+      "parameters": {
+        "content": "### Upload Policies Form\nטופס n8n מובנה. אפשר להעלות כמה קבצים בבת אחת.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -210
+      ],
+      "name": "Note 2",
+      "id": "b223b0f5-ea00-5251-a16d-f5da6c040661"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "memoryKey": {
+          "__rl": true,
+          "value": "mypolicies",
+          "mode": "id"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        280,
+        0
+      ],
+      "name": "Policies Vector Store",
+      "id": "81892fcf-9126-5250-8920-eade956603a3"
+    },
+    {
+      "parameters": {
+        "content": "### Policies Vector Store\nשומר את הווקטורים בזיכרון n8n תחת 'mypolicies'. WF5 קורא מכאן.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -210
+      ],
+      "name": "Note 4",
+      "id": "549ccee4-565e-5bbe-a6d2-f4b78b73b461"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        280,
+        230
+      ],
+      "name": "Embeddings",
+      "id": "3a7ca85b-d109-56c1-b967-80934a25a47d",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "__CRED_GEMINI__",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Embeddings\nGoogle Gemini gemini-embedding-001: רב-לשוני, טוב לעברית, ושכבה חינמית נדיבה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        340
+      ],
+      "name": "Note 6",
+      "id": "45fd2dc2-8beb-532b-993e-a2fb323a1de4"
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "loader": "textLoader",
+        "binaryMode": "allInputData",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        230
+      ],
+      "name": "Load Documents",
+      "id": "c61cf3cd-bc36-5f54-bbc3-08d340535269"
+    },
+    {
+      "parameters": {
+        "content": "### Load Documents\nטוען את כל הקבצים שהועלו כטקסט.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        460,
+        340
+      ],
+      "name": "Note 8",
+      "id": "3c322d58-93c9-5708-a3f0-c7cdc0fa8ba9"
+    },
+    {
+      "parameters": {
+        "chunkSize": 1000,
+        "chunkOverlap": 150,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        480,
+        430
+      ],
+      "name": "Split Text",
+      "id": "f1436964-f7e8-58ee-89f2-dda2207be41a"
+    },
+    {
+      "parameters": {
+        "content": "### Split Text\nחיתוך לקטעים של 1000 תווים עם חפיפה של 150, כדי שכל קטע יישאר בהקשר.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        460,
+        540
+      ],
+      "name": "Note 10",
+      "id": "65e3ab39-5d9e-55d6-8fc2-13c5a23ded9b"
+    }
+  ],
+  "connections": {
+    "Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Policies Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Documents": {
+      "ai_document": [
+        [
+          {
+            "node": "Policies Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Text": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Load Documents",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Policies Form": {
+      "main": [
+        [
+          {
+            "node": "Policies Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "OrderId": "ORD-0001",
+    "CustomerId": "CUST-0001",
+    "Product": "מסך 27 אינץ' TY-Vision QHD 165Hz",
+    "Quantity": 2,
+    "Total": 2580,
+    "Status": "Delivered"
+  },
+  {
+    "OrderId": "ORD-0002",
+    "CustomerId": "CUST-0002",
+    "Product": "מחשב נייד TY-Book Pro 14",
+    "Quantity": 2,
+    "Total": 8990,
+    "Status": "Delivered"
+  },
+  {
+    "OrderId": "ORD-0003",
+    "CustomerId": "CUST-0003",
+    "Product": "רמקול בלוטות' TY-Sound Mini",
+    "Quantity": 6,
+    "Total": 1074,
+    "Status": "Shipped"
+  },
+  {
+    "OrderId": "ORD-0004",
+    "CustomerId": "CUST-0004",
+    "Product": "עמדת עגינה USB-C TY-Dock 11",
+    "Quantity": 4,
+    "Total": 1596,
+    "Status": "New"
+  }
+]

@@ -1,0 +1,437 @@
+{
+  "name": "Shlomi ERP - 05 - Customer Service Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF5 · סוכן שירות לקוחות (בוט טלגרם #2)\nלקוח כותב לבוט התמיכה → סוכן AI עונה רק לפי מה שהוא שולף משני מאגרי ה-RAG (מדיניות + מוצרים, נטענים ב-WF6/WF7). זיכרון שיחה לפי Chat ID. אם הסוכן נכשל, הלקוח מקבל הודעת נפילה מנומסת (ענף שגיאה) במקום שתיקה.",
+        "height": 130,
+        "width": 1000,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -260
+      ],
+      "name": "Note 0",
+      "id": "650db2c8-647d-5082-bb1c-5592bbbab5da"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "name": "Telegram Trigger",
+      "id": "953fda86-57eb-5ace-82ed-d4ec20a548d8",
+      "credentials": {
+        "telegramApi": {
+          "id": "__CRED_TELEGRAM_SUPPORT__",
+          "name": "Telegram Support Bot"
+        }
+      },
+      "webhookId": "07fb0c33-7ec9-53c8-b3b1-652dde861255"
+    },
+    {
+      "parameters": {
+        "content": "### Telegram Trigger\nבוט התמיכה. כל הודעת טקסט מלקוח מפעילה את הסוכן.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -210
+      ],
+      "name": "Note 2",
+      "id": "884db500-6a5e-518f-869e-107be8bb6d61"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "אתה נציג שירות הלקוחות של Shlomi Electronics (שלומי אלקטרוניקה), חנות אלקטרוניקה ישראלית. אתה עונה בטלגרם, בעברית, בטון חם, קצר ומקצועי.\n\nיש לך שני כלים:\n- policies — מדיניות החברה: החזרות, אחריות, משלוחים, מחירים והנחות, תשלומים וחשבוניות, שעות פעילות, שאלות נפוצות.\n- products — קטלוג המוצרים: שמות, מק\"טים, מחירים, מפרטים, זמינות.\n\nכללים מחייבים:\n1. לפני כל תשובה עניינית, חפש בכלי המתאים. ענה רק לפי מה שחזר מהכלים. אל תמציא מחירים, מלאי, זמני אספקה או תנאים.\n2. אם המידע לא נמצא בכלים, אמור: \"אין לי מידע מדויק על זה. אעביר לנציג אנושי שיחזור אליך בשעות הפעילות.\" ואל תנחש.\n3. אל תבטיח הנחות, החזרים או פיצויים מעבר למה שכתוב במדיניות. הנחות מיוחדות דורשות אישור מנהל.\n4. אל תבקש ואל תשמור פרטי כרטיס אשראי או תעודת זהות בצ'אט.\n5. תשובה של 2-5 משפטים. אפשר נקודות קצרות. בלי אימוג'ים מוגזמים. סיים בשאלה קצרה אם יש צורך במידע נוסף.\n6. אם הלקוח כועס, התנצל פעם אחת בכנות, הצע פתרון לפי המדיניות, והצע העברה לנציג אנושי.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        280,
+        0
+      ],
+      "name": "AI Agent",
+      "id": "d3697c19-d161-5404-8e4e-cc0ab5c4b508",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "### AI Agent\nסוכן RAG: System Message מהמסמכים 07/08, שני כלי חיפוש וקטוריים, זיכרון שיחה. הפלט השני (error) → הודעת נפילה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -210
+      ],
+      "name": "Note 4",
+      "id": "96650906-4c3c-5701-987b-205671ed212c"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        230
+      ],
+      "name": "Gemini Chat Model",
+      "id": "f31149eb-bb4c-58bb-9a32-c0ddcec6e71a",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "__CRED_GEMINI__",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        400,
+        230
+      ],
+      "name": "Chat Memory",
+      "id": "4476759a-cec8-5d3b-b770-b39ed3899456"
+    },
+    {
+      "parameters": {
+        "content": "### Chat Memory\nזוכר 10 הודעות אחרונות לכל Chat ID, כדי שהלקוח לא יחזור על עצמו.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        380,
+        340
+      ],
+      "name": "Note 7",
+      "id": "4d32ea24-64ea-5ecf-b872-7d81e2058249"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "חיפוש במדיניות Shlomi Electronics: החזרות והחזרים, אחריות, משלוחים ואספקה, מחירים והנחות, תשלומים וחשבוניות, שעות פעילות, שאלות נפוצות. השתמש בו לכל שאלה על תנאים, נהלים וזמנים.",
+        "memoryKey": {
+          "__rl": true,
+          "value": "mypolicies",
+          "mode": "id"
+        },
+        "topK": 5
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        580,
+        230
+      ],
+      "name": "policies",
+      "id": "bc206629-1a46-5ab1-812b-4e2bb838c86b"
+    },
+    {
+      "parameters": {
+        "content": "### policies\nכלי RAG: מאגר וקטורי בזיכרון 'mypolicies' (נטען ב-WF6). מחזיר 5 קטעים דומים.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        560,
+        340
+      ],
+      "name": "Note 9",
+      "id": "877bc7ad-5fef-572a-8f91-4bb7f5d6fda1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        580,
+        430
+      ],
+      "name": "Embeddings (policies)",
+      "id": "fb729b30-c204-5707-9108-a00e1d93acb0",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "__CRED_GEMINI__",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "חיפוש בקטלוג המוצרים של Shlomi Electronics: שם, מק\"ט, קטגוריה, מחיר, מפרט טכני, מה באריזה, אחריות, זמינות במלאי. השתמש בו לכל שאלה על מוצר, מחיר או התאמה לצורך.",
+        "memoryKey": {
+          "__rl": true,
+          "value": "theproducts",
+          "mode": "id"
+        },
+        "topK": 5
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        820,
+        230
+      ],
+      "name": "products",
+      "id": "28c61845-de53-55fb-a5d9-c6bd58f6421d"
+    },
+    {
+      "parameters": {
+        "content": "### products\nכלי RAG: מאגר וקטורי בזיכרון 'theproducts' (נטען ב-WF7).",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        800,
+        340
+      ],
+      "name": "Note 12",
+      "id": "2f38eee6-a68e-5a69-a2d5-391655b8bff3"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        820,
+        430
+      ],
+      "name": "Embeddings (products)",
+      "id": "22cfa62e-31b9-5926-88cb-00f3cafff9f4",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "__CRED_GEMINI__",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "text": "={{ String($json.output).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\\*\\*(.+?)\\*\\*/g, '<b>$1</b>') }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        0
+      ],
+      "name": "Reply",
+      "id": "9b74cfd7-6335-508e-9109-8f7735f030d8",
+      "credentials": {
+        "telegramApi": {
+          "id": "__CRED_TELEGRAM_SUPPORT__",
+          "name": "Telegram Support Bot"
+        }
+      },
+      "webhookId": "5e868acc-55aa-523a-a67c-51ae4a82b533"
+    },
+    {
+      "parameters": {
+        "content": "### Reply\nשולח את תשובת הסוכן ללקוח באותו צ'אט.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        -210
+      ],
+      "name": "Note 15",
+      "id": "d9dee3f1-ed4b-5f6e-b3e1-2cd0850da06c"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "text": "מצטערים, יש לנו תקלה זמנית במערכת. נסו שוב בעוד רגע, או כתבו לנו ל-support@Shlomi-electronics.co.il ונחזור אליכם.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        -180
+      ],
+      "name": "Reply Fallback",
+      "id": "e9c284fd-6eb5-524e-8309-c4bf14f160d6",
+      "credentials": {
+        "telegramApi": {
+          "id": "__CRED_TELEGRAM_SUPPORT__",
+          "name": "Telegram Support Bot"
+        }
+      },
+      "webhookId": "49c2d9ed-2a52-5ec6-971f-fe907d7a67ae"
+    },
+    {
+      "parameters": {
+        "content": "### Reply Fallback\nטיפול שגיאה: אם הסוכן/המודל נכשל, הלקוח מקבל הודעה ברורה. השגיאה עצמה מדווחת לבעלים דרך WF0.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        -390
+      ],
+      "name": "Note 17",
+      "id": "d0fe5472-105c-5db1-8338-d1705429f338"
+    }
+  ],
+  "connections": {
+    "Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "policies": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings (policies)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "policies",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "products": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings (products)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "products",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

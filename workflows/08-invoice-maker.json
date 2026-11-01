@@ -1,0 +1,452 @@
+{
+  "name": "Shlomi ERP - 08 - Invoice Maker",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF8 · הפקת מסמך חשבונית → Google Drive\nמופעל מ-WF1 אחרי אימות החשבונית: שולף את התור (Status = Ready ובלי PdfUrl), ממלא תבנית HTML בעברית RTL, הופך לקובץ, מעלה ל-Google Drive, וכותב את הקישור ל-PdfUrl עם סטטוס Issued. שגיאה בכל שלב מדווחת דרך WF0.",
+        "height": 130,
+        "width": 1000,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -260
+      ],
+      "name": "Note 0",
+      "id": "cfeac0a3-e379-5929-9d9e-e4e030b6d1b1"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "name": "Invoice Ready",
+      "id": "6f1e9c53-03d7-4ddc-93f3-ff3aca8a5fcb"
+    },
+    {
+      "parameters": {
+        "content": "### Invoice Ready\nמופעל על ידי WF1 (Execute Workflow) ברגע שחשבונית סומנה Ready. אין שעון ואין סריקה: WF8 רץ רק כשיש חשבונית להפיק.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -210
+      ],
+      "name": "Note 2",
+      "id": "bf9ef26e-652e-591e-9acf-7f78d554a87f"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "__TBL_INVOICES__",
+          "mode": "id"
+        },
+        "filterByFormula": "=AND({Status}=\"Ready\", {PdfUrl}=BLANK())",
+        "returnAll": false,
+        "limit": 5,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        280,
+        0
+      ],
+      "name": "Ready Invoices",
+      "id": "bcb04d06-c1ae-53e7-bef8-9ed2aea55ee2",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "content": "### Ready Invoices\nהתור ש-WF1 ממלא: Ready ובלי קישור. עד 5 בכל ריצה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -210
+      ],
+      "name": "Note 4",
+      "id": "415db75b-f2d8-5d13-b714-6bcdccf7d9e8"
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html lang=\"he\" dir=\"rtl\">\n<head><meta charset=\"utf-8\"><title>{{ $json.fields.DocType || 'חשבונית מס' }} {{ $json.fields.InvoiceNumber }}</title>\n<style>\n  body{font-family:Arial,Helvetica,sans-serif;background:#f4f4f7;margin:0;padding:24px;color:#1a1a1a}\n  .inv{max-width:680px;margin:0 auto;background:#fff;border:1px solid #ddd;border-radius:8px;padding:32px}\n  .head{display:flex;justify-content:space-between;border-bottom:2px solid #1f4e79;padding-bottom:16px;margin-bottom:24px}\n  .brand{font-size:24px;font-weight:bold;color:#1f4e79}\n  .brand small{display:block;font-size:12px;font-weight:normal;color:#666;margin-top:4px}\n  .meta{text-align:left;font-size:14px;line-height:1.8}\n  .meta b{font-size:16px}\n  table{width:100%;border-collapse:collapse;margin:20px 0}\n  th,td{border:1px solid #ddd;padding:10px;text-align:right;font-size:14px}\n  th{background:#eef2f7}\n  .total-row td{font-weight:bold;font-size:16px;background:#eef2f7}\n  .foot{margin-top:24px;font-size:12px;color:#666;border-top:1px solid #eee;padding-top:12px;line-height:1.6}\n</style></head>\n<body>\n  <div class=\"inv\">\n    <div class=\"head\">\n      <div class=\"brand\">Shlomi Electronics<small>שלומי אלקטרוניקה · עוסק מורשה 515000000 · רחוב הברזל 30, תל אביב · 03-555-1234</small></div>\n      <div class=\"meta\">\n        <div>{{ $json.fields.DocType || 'חשבונית מס' }} <b>{{ $json.fields.InvoiceNumber }}</b></div>\n        <div>מקור</div>\n        <div>תאריך הפקה: {{ $now.setZone('Asia/Jerusalem').format('dd/MM/yyyy') }}</div>\n        <div>לקוח: {{ $json.fields.CustomerId }}</div>\n      </div>\n    </div>\n    <table>\n      <tr><th>תיאור</th><th>סכום לפני מע\"מ</th><th>מע\"מ ({{ Math.round(($json.fields.VatAmount / $json.fields.Amount) * 100) }}%)</th><th>סה\"כ</th></tr>\n      <tr>\n        <td>מוצרי אלקטרוניקה — לפי הזמנה</td>\n        <td>{{ Number($json.fields.Amount).toLocaleString('he-IL', {minimumFractionDigits: 2}) }} ₪</td>\n        <td>{{ Number($json.fields.VatAmount).toLocaleString('he-IL', {minimumFractionDigits: 2}) }} ₪</td>\n        <td>{{ Number($json.fields.Total).toLocaleString('he-IL', {minimumFractionDigits: 2}) }} ₪</td>\n      </tr>\n      <tr class=\"total-row\"><td colspan=\"3\">סה\"כ לתשלום כולל מע\"מ</td><td>{{ Number($json.fields.Total).toLocaleString('he-IL', {minimumFractionDigits: 2}) }} ₪</td></tr>\n    </table>\n    <div class=\"foot\">\n      מסמך זה הופק אוטומטית על ידי מערכת Shlomi ERP ואינו דורש חתימה.<br>\n      תנאי תשלום: שוטף. לשאלות: billing@Shlomi-electronics.co.il\n    </div>\n  </div>\n</body>\n</html>\n"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        0
+      ],
+      "name": "Build HTML",
+      "id": "d74b2b02-ac72-5b62-9804-167fcf74ce07"
+    },
+    {
+      "parameters": {
+        "content": "### Build HTML\nתבנית חשבונית מס בעברית RTL. לעריכת העיצוב או פרטי העסק: כאן, בתיבת הטקסט.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        -210
+      ],
+      "name": "Note 6",
+      "id": "ea1033c3-e109-5a3c-b45b-d67d9ee70ad4"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "html",
+        "options": {
+          "fileName": "=invoice-{{ $('Ready Invoices').item.json.fields.InvoiceNumber }}.html",
+          "encoding": "utf8"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        840,
+        0
+      ],
+      "name": "Convert to File",
+      "id": "9a73d14d-04b9-5d4c-8971-560915e124ff"
+    },
+    {
+      "parameters": {
+        "content": "### Convert to File\nהופך את ה-HTML לקובץ invoice-INV-0001.html.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        -210
+      ],
+      "name": "Note 8",
+      "id": "5a4901cb-4876-59f3-8397-e953b50ec7f8"
+    },
+    {
+      "parameters": {
+        "name": "=invoice-{{ $('Ready Invoices').item.json.fields.InvoiceNumber }}.html",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        0
+      ],
+      "name": "Upload to Drive",
+      "id": "5cb2b7fa-5fec-5937-a9ad-7d464f3cb5aa",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "__CRED_GDRIVE__",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "### Upload to Drive\nמעלה לדרייב ומחזיר webViewLink. אפשר לבחור תיקייה ייעודית.\nטיפול בשגיאה מקומי: אם ההעלאה נכשלת, הפלט השני מסמן UploadFailed במקום להפיל את התהליך.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -210
+      ],
+      "name": "Note 10",
+      "id": "2cb37e4a-550c-5de7-8d86-ce06b38a64ac"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "__TBL_INVOICES__",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Ready Invoices').item.json.id }}",
+            "PdfUrl": "={{ $json.webViewLink }}",
+            "Status": "Issued"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "PdfUrl",
+              "displayName": "PdfUrl",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1400,
+        0
+      ],
+      "name": "Save Link & Mark Issued",
+      "id": "e3f9dd0c-b9e8-587d-b672-759a5956ca68",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Save Link & Mark Issued\nכותב את הקישור ל-PdfUrl ומסמן Issued. האפליקציה מציגה את הקישור.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1380,
+        -210
+      ],
+      "name": "Note 12",
+      "id": "684a08ec-5c44-544b-91f8-d1c75cfd4cb9"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "__TBL_INVOICES__",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Ready Invoices').item.json.id }}",
+            "Status": "UploadFailed"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1400,
+        260
+      ],
+      "name": "Mark Upload Failed",
+      "id": "ffd472ab-efbe-4fed-83dd-13f2ae3924a7",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Mark Upload Failed\nטיפול בשגיאה: כשל בהעלאה לדרייב מסמן את החשבונית UploadFailed. היא נשארת עם המספר והמע\"מ, ואפשר להריץ שוב אחרי תיקון החיבור.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1380,
+        370
+      ],
+      "name": "Note 40",
+      "id": "61fe5bb7-e642-4dcc-b585-252d969a3e4a"
+    }
+  ],
+  "connections": {
+    "Ready Invoices": {
+      "main": [
+        [
+          {
+            "node": "Build HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HTML": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Drive": {
+      "main": [
+        [
+          {
+            "node": "Save Link & Mark Issued",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Upload Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invoice Ready": {
+      "main": [
+        [
+          {
+            "node": "Ready Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

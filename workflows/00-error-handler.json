@@ -1,0 +1,155 @@
+{
+  "name": "Shlomi ERP - 00 - Error Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF0 · טיפול בשגיאות מרכזי\nכל workflow במערכת מוגדר עם Error Workflow = זה. כשריצה נכשלת, הבעלים מקבל הודעת טלגרם עם שם ה-workflow, הצומת שנכשל, הודעת השגיאה וקישור לריצה. זהו רובד טיפול השגיאות הגלובלי; בנוסף לכל workflow יש ענף שגיאה מקומי משלו.",
+        "height": 130,
+        "width": 1000,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -260
+      ],
+      "name": "Note 0",
+      "id": "cc7e54e6-21e4-5130-8df7-3daa57c9f15f"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "name": "Error Trigger",
+      "id": "1d5db4e2-8680-548b-946b-762024287798"
+    },
+    {
+      "parameters": {
+        "content": "### Error Trigger\nמופעל אוטומטית על ידי n8n כשכל workflow אחר נכשל. מקבל: שם ה-workflow, הצומת האחרון, הודעת השגיאה, קישור לריצה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -210
+      ],
+      "name": "Note 2",
+      "id": "78c0d64f-6e5d-51e2-99e4-b7a76fae02ce"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "45536b9b-ef28-5bbf-a0dc-93d2aa86ede0",
+              "name": "text",
+              "type": "string",
+              "value": "=❌ <b>שגיאה במערכת Shlomi ERP</b>\nWorkflow: {{ $json.workflow.name }}\nצומת: {{ $json.execution.lastNodeExecuted }}\nשגיאה: {{ $json.execution.error.message }}\nזמן: {{ $now.setZone('Asia/Jerusalem').format('dd/MM/yyyy HH:mm') }}\n{{ $json.execution.url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        280,
+        0
+      ],
+      "name": "Build Message",
+      "id": "a046d221-60ad-5f93-98d4-830cb2d0e0f4"
+    },
+    {
+      "parameters": {
+        "content": "### Build Message\nמנסח הודעה קריאה בעברית מתוך פרטי השגיאה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -210
+      ],
+      "name": "Note 4",
+      "id": "cf7687ba-d915-5bb3-9c2b-96c5780a71b2"
+    },
+    {
+      "parameters": {
+        "chatId": "__OWNER_TELEGRAM_CHAT_ID__",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        0
+      ],
+      "name": "Notify Owner",
+      "id": "ffee2483-2d4d-5830-a8ad-efbf07b966c4",
+      "credentials": {
+        "telegramApi": {
+          "id": "__CRED_TELEGRAM_MANAGER__",
+          "name": "Telegram Manager Bot"
+        }
+      },
+      "webhookId": "98d3f4bf-90b8-56f1-b301-b5c206e8f713"
+    },
+    {
+      "parameters": {
+        "content": "### Notify Owner\nשולח את ההתראה לבוט המנהל, ל-Chat ID של הבעלים בלבד.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        -210
+      ],
+      "name": "Note 6",
+      "id": "7f85be29-7e0a-54c4-ad20-e39c151dbc5b"
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Message": {
+      "main": [
+        [
+          {
+            "node": "Notify Owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

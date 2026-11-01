@@ -1,0 +1,7 @@
+[
+  {"Name": "דנה לוי", "Email": "__OWNER_EMAIL_PLUS__lead-dana", "Phone": "052-1234567", "Company": "סטודיו לוי עיצוב", "Interest": "מסכים למעצבים", "Status": "New"},
+  {"Name": "יוסי כהן", "Email": "__OWNER_EMAIL_PLUS__lead-yossi", "Phone": "054-7654321", "Company": "כהן הנדסה בע\"מ", "Interest": "מחשבים ניידים לצוות של 8", "Status": "New"},
+  {"Name": "מאיה ברק", "Email": "__OWNER_EMAIL_PLUS__lead-maya", "Phone": "050-9876543", "Company": "", "Interest": "אוזניות עם סינון רעשים", "Status": "New"},
+  {"Name": "אורי שמש", "Email": "__OWNER_EMAIL_PLUS__lead-uri", "Phone": "053-1112222", "Company": "קפה שמש", "Interest": "רמקולים לבית קפה", "Status": "Contacted"},
+  {"Name": "נועה פרידמן", "Email": "__OWNER_EMAIL_PLUS__lead-noa", "Phone": "058-3334444", "Company": "פרידמן ושות' רואי חשבון", "Interest": "טאבלטים לפגישות", "Status": "Replied"}
+]

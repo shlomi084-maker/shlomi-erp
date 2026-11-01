@@ -1,0 +1,14 @@
+# secrets and machine-local state
+.env
+.local/
+
+# course materials that are not part of the deliverable (lesson notes contain a shared class DB password)
+course-materials/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+__pycache__/
+*.pyc

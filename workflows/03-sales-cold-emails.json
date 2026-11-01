@@ -1,0 +1,437 @@
+{
+  "name": "Shlomi ERP - 03 - Sales Cold Emails",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF3 · סוכן מכירות — מיילים קרים\nכל 3 שעות: שולף ליד אחד בסטטוס New (אחד בכל ריצה, כדי שטעות לא תשלח עשרות מיילים), מנסח בעזרת LLM מייל פתיחה אישי בעברית לפי הפלייבוק, שולח ב-Gmail, ומסמן Contacted. אם השליחה נכשלת הליד מסומן EmailFailed (ענף שגיאה) ולא נתקע.",
+        "height": 130,
+        "width": 1000,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -260
+      ],
+      "name": "Note 0",
+      "id": "09a062e4-b554-540d-9be0-a8772c24d708"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "name": "Every 3 Hours",
+      "id": "60264f5b-0b8f-54c9-bdb9-de45876579c7"
+    },
+    {
+      "parameters": {
+        "content": "### Every 3 Hours\nטריגר מתוזמן. להדגמה אפשר ללחוץ Execute workflow.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -210
+      ],
+      "name": "Note 2",
+      "id": "cb5ca78c-4eb8-52e1-9612-be8fa3d19eed"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "__TBL_LEADS__",
+          "mode": "id"
+        },
+        "filterByFormula": "={Status}='New'",
+        "returnAll": false,
+        "limit": 1,
+        "sort": {
+          "property": [
+            {
+              "field": "Created",
+              "direction": "asc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        280,
+        0
+      ],
+      "name": "Next New Lead",
+      "id": "8fdb275f-f879-57c6-9359-48d450c3411d",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Next New Lead\nליד אחד בלבד בכל ריצה (הישן ביותר), לפי הדרישה במפרט.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -210
+      ],
+      "name": "Note 4",
+      "id": "e0df3f08-0efc-5f3a-ad9d-a3467857ad2c"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=כתוב מייל מכירה קר, קצר וידידותי בעברית, מטעם Shlomi Electronics (שלומי אלקטרוניקה), חנות אלקטרוניקה ישראלית לעסקים ולפרטיים.\nהנמען: {{ $json.fields.Name }}{{ $json.fields.Company ? ' מחברת ' + $json.fields.Company : '' }}.\nתחום העניין שלו: {{ $json.fields.Interest || 'מוצרי אלקטרוניקה לעסק' }}.\n\nכללים:\n- פתיחה אישית בשם, משפט אחד על מה שאנחנו מציעים בתחום העניין שלו, יתרון אחד קונקרטי (מחירי סיטונאות, אחריות יבואן רשמי, משלוח חינם מעל 499 ₪).\n- קריאה אחת ברורה לפעולה: להשיב למייל הזה עם שעה נוחה לשיחה.\n- בלי הבטחות על מחירים ספציפיים, בלי הנחות לא מאושרות, בלי סימני קריאה מוגזמים.\n- עד 110 מילים. חתימה: צוות המכירות, Shlomi Electronics.\nהחזר רק את גוף המייל, בלי שורת נושא.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        560,
+        0
+      ],
+      "name": "Write Cold Email",
+      "id": "d1d3bc22-03fb-50f8-bb11-200fd22972c2"
+    },
+    {
+      "parameters": {
+        "content": "### Write Cold Email\nשרשרת LLM: מנסחת מייל אישי לפי שם, חברה ותחום עניין, לפי כללי הפלייבוק (09). מחזירה רק את גוף המייל.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        -210
+      ],
+      "name": "Note 6",
+      "id": "0fe46162-8b9b-514c-a23d-9abc6b3b2f1f"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        230
+      ],
+      "name": "Gemini Chat Model",
+      "id": "42a862ac-9934-5aad-9378-9f1d65819000",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "__CRED_GEMINI__",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Next New Lead').item.json.fields.Email }}",
+        "subject": "=Shlomi Electronics — {{ $('Next New Lead').item.json.fields.Interest || 'פתרונות אלקטרוניקה' }} לעסק שלך",
+        "emailType": "text",
+        "message": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        840,
+        0
+      ],
+      "name": "Send Email",
+      "id": "1faa8069-5f30-590f-89f7-7dfb81ad133f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "__CRED_GMAIL__",
+          "name": "Gmail account"
+        }
+      },
+      "webhookId": "33ef8f96-bfba-5125-8113-21776302044c",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "### Send Email\nשולח את המייל לכתובת הליד (שדה Email). הפלט השני (error) מוביל לסימון EmailFailed במקום להפיל את הריצה.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        -210
+      ],
+      "name": "Note 9",
+      "id": "f760f527-92a9-5a15-883a-b4732b076bc8"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "__TBL_LEADS__",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Next New Lead').item.json.id }}",
+            "Status": "Contacted"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        0
+      ],
+      "name": "Mark Contacted",
+      "id": "6f4ae32d-b9b2-501c-8dda-feb44087c5d7",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Mark Contacted\nמסמן Status = Contacted כדי שהליד לא יקבל מייל נוסף. WF4 יחפש את תשובתו.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -210
+      ],
+      "name": "Note 11",
+      "id": "e006b810-ada5-5e33-9be5-d15b9da2f634"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "__AIRTABLE_BASE_ID__",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "__TBL_LEADS__",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Next New Lead').item.json.id }}",
+            "Status": "EmailFailed"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        260
+      ],
+      "name": "Mark Email Failed",
+      "id": "9f3df1bd-021c-5c3d-a7b2-91cc854d7a18",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "__CRED_AIRTABLE__",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Mark Email Failed\nטיפול שגיאה: כתובת לא תקינה או תקלת Gmail → EmailFailed, והבעלים רואה זאת בדשבורד.",
+        "height": 190,
+        "width": 240,
+        "color": 1
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        370
+      ],
+      "name": "Note 13",
+      "id": "f3a5e1f8-046c-5ec9-8d36-07dc744c5bd9"
+    }
+  ],
+  "connections": {
+    "Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write Cold Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 3 Hours": {
+      "main": [
+        [
+          {
+            "node": "Next New Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Next New Lead": {
+      "main": [
+        [
+          {
+            "node": "Write Cold Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Cold Email": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Mark Contacted",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Email Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
