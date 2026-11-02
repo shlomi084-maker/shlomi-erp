@@ -71,6 +71,44 @@ def existing_by_name():
             return out
 
 
+def check_credentials(files):
+    """Make sure every __CRED_*__ id from .env exists in n8n with the type the workflows expect.
+
+    Re-creating a credential in the n8n UI (e.g. reconnecting Google OAuth) gives it a new id, and nodes that
+    still point at the old id fail at run time ("Credential with ID ... does not exist"). If the .env id is
+    stale and n8n holds exactly one credential of the right type, use that one; otherwise stop with a list.
+    """
+    wanted = {}  # placeholder -> credential type, read from the workflow files themselves
+    for path in files:
+        for node in json.load(open(path, encoding="utf-8"))["nodes"]:
+            for ctype, cred in (node.get("credentials") or {}).items():
+                if cred.get("id") in SUBS:
+                    wanted[cred["id"]] = ctype
+    creds, cursor = [], None
+    while True:
+        status, data = request("GET", f"{API}/credentials?limit=250" + (f"&cursor={cursor}" if cursor else ""), H)
+        if status != 200:
+            print(f"WARNING cannot list credentials ({status}); skipping the credential id check")
+            return
+        creds += data.get("data", [])
+        cursor = data.get("nextCursor")
+        if not cursor:
+            break
+    for ph, ctype in sorted(wanted.items()):
+        if any(c["id"] == SUBS[ph] and c["type"] == ctype for c in creds):
+            continue
+        same_type = [c for c in creds if c["type"] == ctype]
+        key = ph.strip("_")
+        if len(same_type) == 1:
+            c = same_type[0]
+            print(f"NOTE {key}={SUBS[ph]} is not a {ctype} credential in n8n; using '{c['name']}' ({c['id']}). "
+                  f"Put {key}={c['id']} in .env.")
+            SUBS[ph] = c["id"]
+        else:
+            listing = "; ".join(f"{c['id']} '{c['name']}'" for c in same_type) or "none - create it in n8n first"
+            die(f"{key}={SUBS[ph]} is not a {ctype} credential in n8n. Set {key} in .env to one of: {listing}")
+
+
 def load(path):
     raw = open(path, encoding="utf-8").read()
     for k, v in SUBS.items():
@@ -125,6 +163,7 @@ def main():
         return render()
     files = sorted(glob.glob(os.path.join(ROOT, "workflows", "*.json")))
     files.sort(key=lambda f: next((i for i, p in enumerate(IMPORT_FIRST) if os.path.basename(f).startswith(p)), 99))
+    check_credentials(files)
     existing = existing_by_name()
     ids = {}
 

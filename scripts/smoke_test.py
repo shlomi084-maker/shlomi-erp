@@ -67,6 +67,7 @@ def paced(*a, **k):
 
 
 def main():
+    started = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())  # only this run's failures count in step 5
     tag = str(int(time.time()))[-6:]
     print("1) WF2 Leads intake")
     lead = {"name": f"בדיקה {tag}", "email": plus_address(OWNER_EMAIL, f"smoke{tag}"), "phone": "050-0000000",
@@ -106,14 +107,16 @@ def main():
     s, d = paced("POST", f"{N8N}/webhook/app", body={"action": "nope"})
     check("unknown action -> 400", s == 400, f"HTTP {s}")
 
-    print("5) Failed executions in n8n (last 10)")
+    print("5) Failed executions in n8n during this run")
     if not N8N_KEY:
         print("     (no N8N_API_KEY - skipped; check n8n > Executions by hand)")
         s, d = 0, None
     else:
-        s, d = request("GET", f"{N8N}/api/v1/executions?status=error&limit=10", NH)
+        s, d = request("GET", f"{N8N}/api/v1/executions?status=error&limit=50", NH)
     if s == 200 and isinstance(d, dict):
-        errs = d.get("data", [])
+        # startedAt is ISO-8601 UTC ("2026-11-02T14:18:35.000Z"), so a string compare orders it correctly.
+        # Older failures (e.g. before a credential was reconnected) are not this run's problem.
+        errs = [e for e in d.get("data", []) if (e.get("startedAt") or "") >= started]
         for e in errs:
             print(f"     workflow {e.get('workflowId')} execution {e.get('id')} at {e.get('startedAt')}")
         check("no failed executions", not errs, f"{len(errs)} failed")
