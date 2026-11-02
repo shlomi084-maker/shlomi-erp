@@ -1,27 +1,33 @@
 # Shlomi ERP — AI-ERP with n8n (Graduation Project)
 
 A small, no-code ERP for a fictional Israeli electronics retailer, **Shlomi Electronics (שלומי אלקטרוניקה)**, built on
-**n8n Cloud** (automation, AI agents, RAG), **Airtable** (data) and a **Lovable** admin app.
+**n8n** (automation, AI agents, RAG; self-hosted in Docker), **Airtable** (data), **Google Gemini** (LLM + embeddings)
+and a **Lovable** admin app.
 Course brief: [`docs/final-project-spec.docx`](docs/final-project-spec.docx).
 
 > מערכת ניהול עסק קטנה לחנות אלקטרוניקה ישראלית דמיונית: לידים נכנסים ומקבלים מייל אישי, לקוחות מקבלים
 > תשובות מבוט טלגרם שמעוגן במדיניות ובקטלוג (RAG), חשבוניות מקבלות מע"מ ומספר עוקב ומופקות כמסמך לדרייב,
 > ובעל העסק שואל בוט פרטי "מה ההכנסות?". אפס קוד: כל הלוגיקה בצמתים מוכנים של n8n.
 
-> **Project status:** submitted and graded (September 2026). The live demo (self-hosted n8n, Airtable base, Lovable apps, Telegram bots) was shut down after grading, so there are no live URLs. Everything needed to rebuild it is in this repo: `scripts/` recreate the Airtable base and import the workflows, `app/` holds the Lovable prompts, and the screenshots below show the running system.
+> **Status:** complete and running. n8n is self-hosted in Docker and reachable over HTTPS through a Cloudflare
+> tunnel; the end-to-end check `scripts/smoke_test.py` passes 11/11 against the live system (lead intake and
+> dedupe, VAT and invoice numbering, invoice document in Google Drive, App API, Gemini chat, no failed executions).
+> Public URLs are not listed here because the tunnel address is temporary; they are shown in the live demo.
+> Everything needed to rebuild the system is in this repo: `scripts/` create the Airtable base and import the
+> workflows, `app/` holds the Lovable prompts.
 
 ## Three layers, one data model
 
 | Layer | Where | Role |
 |---|---|---|
 | Data | Airtable | 6 tables (`Invoices`, `Leads`, `Customers`, `Orders`, `Products`, `Tasks`) — single source of truth |
-| Logic | n8n Cloud | 10 workflows + 1 error handler, 3 AI agents, in-memory vector store (RAG) |
+| Logic | n8n (Docker + Cloudflare tunnel) | 10 workflows + 1 error handler, 3 AI agents, in-memory vector store (RAG) |
 | UI | Lovable | Admin app: dashboard, customers, leads, orders, invoices, products, tasks, chat — talks to n8n through **one** webhook. Plus a demo landing page whose lead form posts to WF2. |
 
 ```
  website / app form ──POST──▶ WF2 Leads Intake ──▶ Airtable.Leads ──▶ WF3 Cold Email (every 3h) ──▶ Gmail
                                                         ▲                                            │
-                                                        └──── WF4 Reply Check (every 30m) ◀── Gmail ◀┘
+                                                        └──── WF4 Reply Check (every 3h) ◀─── Gmail ◀┘
  customer ──Telegram bot #2──▶ WF5 Customer-Service Agent ◀── RAG (WF6 policies, WF7 products)
  owner    ──Telegram bot #1──▶ WF9 Manager Agent ◀── Summarize(Airtable.Invoices)
  app ──POST /webhook/app──▶ WF13 App API ──▶ Airtable (read / create / update) + chat agent
@@ -76,11 +82,12 @@ them as two tools and is instructed to answer **only** from retrieved text.
 Full step-by-step guide (Docker, Airtable, Telegram bots, credentials, import, RAG, Lovable):
 [docs/setup-guide.md](docs/setup-guide.md). App endpoints: [docs/frontend-integration.md](docs/frontend-integration.md).
 
-**Local n8n in Docker** (instead of n8n Cloud): set `N8N_ENCRYPTION_KEY` (and for Telegram/Lovable the tunnel
-variables) in `.env`, then `docker compose --profile tunnel up -d` and use the tunnel URL as `N8N_URL`.
-See [`docker-compose.yml`](docker-compose.yml).
+**n8n in Docker:** set `N8N_ENCRYPTION_KEY` in `.env`, then `docker compose --profile tunnel up -d` (Cloudflare named
+tunnel, stable hostname) or `docker compose --profile quicktunnel up -d` (temporary `trycloudflare.com` URL, no account).
+Put the public URL in `N8N_WEBHOOK_URL`; Telegram, Lovable and the Google OAuth redirect all use it.
+See [`docker-compose.yml`](docker-compose.yml). n8n Cloud works too: use the instance URL instead.
 
-Accounts: n8n Cloud (or local Docker), Airtable, Google AI Studio (Gemini API key), two Telegram bots (BotFather), a Google account (Gmail + Drive), Lovable.
+Accounts: n8n (Docker or Cloud), Airtable, Google AI Studio (Gemini API key), two Telegram bots (BotFather), a Google account (Gmail + Drive), Lovable.
 
 1. In n8n create 6 credentials: Google Gemini, Airtable token, Telegram (manager bot), Telegram (support bot), Gmail OAuth, Google Drive OAuth.
 2. `cp .env.example .env` and fill it in (n8n URL, Airtable PAT + base id, your Telegram chat id, the 6 credential ids).
@@ -93,8 +100,11 @@ Accounts: n8n Cloud (or local Docker), Airtable, Google AI Studio (Gemini API ke
 python3 scripts/airtable_setup.py
 python3 scripts/n8n_import.py          # or: --render, then paste by hand
 python3 scripts/load_rag.py            # needs FORM_POLICIES_ID / FORM_PRODUCTS_ID in .env
-python3 scripts/smoke_test.py
+python3 scripts/smoke_test.py         # end-to-end check of WF2, WF13 -> WF1 -> WF8, chat; 11 checks
 ```
+
+`n8n_import.py` first checks every `CRED_*` id in `.env` against the live n8n. Reconnecting a Google credential can give
+it a new id; if exactly one credential of the right type exists the script uses it, otherwise it stops and lists them.
 
 4. Build the admin app in Lovable with [`app/lovable-prompt.md`](app/lovable-prompt.md) and the `/webhook/app` URL, then Publish.
 5. Optional: build the demo landing page as a separate Lovable project with [`app/landing-prompt.md`](app/landing-prompt.md) and the `/webhook/lead` URL.
@@ -105,9 +115,8 @@ then pick your base, tables and credentials in each node.
 
 ## Screenshots
 
-**Admin app and landing page (Lovable)** — built separately in Lovable from the prompts in [`app/`](app/);
-the connection details are in [docs/frontend-integration.md](docs/frontend-integration.md). Screenshots of the
-Shlomi ERP app go here once it is built.
+**Admin app and landing page (Lovable)** are built in Lovable from the prompts in [`app/`](app/); no frontend code
+lives in this repo. The endpoint contract they use is in [docs/frontend-integration.md](docs/frontend-integration.md).
 
 **Telegram bots**
 
@@ -135,7 +144,8 @@ for likely questions. Before a demo run `load_rag.py` (the vector store is in me
 
 - The vector store and agent memory live in n8n's memory and reset on restart → re-run WF6 + WF7 (`load_rag.py`).
 - Invoices are HTML documents in Drive; PDF is one manual click (open with Google Docs → download as PDF).
-- Running invoice numbers can collide if two invoices are created in the same polling minute.
+- A quick tunnel (`trycloudflare.com`) gets a new URL on every restart; then update `N8N_WEBHOOK_URL`, the Google
+  OAuth redirect URI and the app's API URL. A Cloudflare named tunnel avoids this.
 - Nothing runs on a clock except WF3/WF4 (every 3 h). Invoices are processed as an event chain, app → WF13 → WF1 → WF8, instead of the course sample's per-minute polling: zero API calls when idle, a document within seconds, and no running-number collisions because invoices are processed one at a time. The trade-off: an invoice typed directly into Airtable is not picked up; create it from the app.
 - The manager agent is read-only, has no tools, and sees at most 100 invoices.
 - WF3 emails one lead per run so a mistake can never mass-mail.

@@ -31,6 +31,8 @@ docker compose ps        # n8n צריך להיות healthy
 > **בלי חשבון/דומיין ב-Cloudflare:** `docker compose --profile quicktunnel up -d quicktunnel`, ואז
 > `docker compose logs quicktunnel` מציג כתובת `https://<מילים>.trycloudflare.com`. שמים אותה (עם `/` בסוף) ב-`N8N_WEBHOOK_URL`,
 > `N8N_PROXY_HOPS=1`, ומריצים `docker compose up -d n8n`. הכתובת מתחלפת בכל הפעלה מחדש של ה-tunnel — מתאים לבדיקות, לא להצגה.
+> אחרי כל החלפת כתובת מעדכנים גם את ה-Authorized redirect URI ב-Google Cloud (`<כתובת>/rest/oauth2-credential/callback`)
+> ואת כתובת ה-API באפליקציה.
 >
 > בלי tunnel (`docker compose up -d`) הכל עובד ב-`http://localhost:5678` חוץ מבוטי הטלגרם והאפליקציה ב-Lovable.
 > n8n Cloud במקום Docker: מדלגים על השלב, `N8N_URL` = כתובת ה-instance.
@@ -78,6 +80,10 @@ python3 scripts/n8n_import.py
 הסקריפט מחליף את ה-placeholders (`__AIRTABLE_BASE_ID__`, `__TBL_*__`, `__CRED_*__`, `__OWNER_*__`) בערכים מ-`.env`,
 יוצר או מעדכן כל workflow לפי שם, מגדיר את WF0 כ-Error Workflow של כולם, מקשר את WF13 → WF1 → WF8 ומפעיל.
 בהפעלה n8n רושם את ה-webhook של כל בוט בטלגרם (WF5, WF9) מול `N8N_WEBHOOK_URL`.
+
+לפני הייבוא הסקריפט בודק שכל `CRED_*` ב-`.env` קיים ב-n8n ובסוג הנכון. חיבור מחדש של credential של Google יכול
+ליצור id חדש: אם יש בדיוק credential אחד מהסוג הזה, הסקריפט משתמש בו ומציין זאת; אחרת הוא עוצר ומציג את האפשרויות.
+`--only=08` מייבא רק workflow מסוים (ואת WF0).
 
 בלי API (n8n Cloud trial): `python3 scripts/n8n_import.py --render` כותב קבצים מלאים ל-`.local/rendered/`,
 ומדביקים כל אחד בקנבס (Create workflow → Ctrl+V → Save → Settings → Error Workflow = WF0 → Publish).

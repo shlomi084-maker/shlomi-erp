@@ -10,9 +10,8 @@ flowchart LR
     A3[בוט טלגרם #1 מנהל]
     A4[Gmail תשובות]
     A5[לוחות זמנים]
-    A6[רשומה חדשה ב-Airtable]
   end
-  subgraph N8N[n8n Cloud]
+  subgraph N8N[n8n · Docker]
     W2[WF2 קליטת לידים]
     W3[WF3 מיילים קרים]
     W4[WF4 בדיקת תשובות]
@@ -39,9 +38,9 @@ flowchart LR
   A4 --> W4 --> AT
   A2 --> W5 --> TG
   A3 --> W9 --> TG
-  A6 --> W1 --> AT
-  A5 --> W8 --> GD
   APP[אפליקציית Lovable] --> W13 --> AT
+  W13 -- חשבונית חדשה --> W1 --> W8 --> GD
+  W1 & W8 --> AT
   W3 & W5 & W9 & W13 -.-> OA
   W1 & W2 & W3 & W4 & W5 & W8 & W9 & W13 -. שגיאה .-> W0 --> TG
 ```
@@ -50,8 +49,8 @@ flowchart LR
 
 | שכבה | טכנולוגיה | מה יש בה |
 |---|---|---|
-| נתונים | Airtable | 4 טבלאות. מקור האמת היחיד. מפתחות זרים כטקסט (`CUST-0001`). |
-| לוגיקה | n8n Cloud | 10 workflows + Error Handler, 3 סוכני AI, מאגר וקטורי בזיכרון. אפס קוד. |
+| נתונים | Airtable | 6 טבלאות. מקור האמת היחיד. מפתחות זרים כטקסט (`CUST-0001`). |
+| לוגיקה | n8n (Docker + Cloudflare tunnel) | 10 workflows + Error Handler, 3 סוכני AI, מאגר וקטורי בזיכרון. אפס קוד. |
 | ממשק | Lovable | דשבורד, טבלאות, טפסים, צ'אט. מדבר רק עם WF13. |
 
 ## שלושת הסוכנים
@@ -73,12 +72,12 @@ flowchart LR
 ## מחזור חיים של חשבונית
 
 ```
-אפליקציה / Airtable: רשומה חדשה (Amount, CustomerId)
-  → WF1 (פולינג כל דקה על Created)
+אפליקציה: חשבונית חדשה (Amount, CustomerId) → WF13 יוצר רשומה ב-Airtable
+  → WF1 (Execute Workflow, מיד)
       ├─ לא תקין → Status = Invalid
       └─ תקין → VatAmount, Total, InvoiceNumber עוקב → Status = Ready
-  → WF8 (כל דקה, Ready ובלי PdfUrl)
-      → HTML עברית RTL → קובץ → Google Drive → PdfUrl, Status = Issued
+  → WF8 (Execute Workflow, מיד)
+      → HTML עברית RTL → קובץ → Google Drive → PdfUrl, Status = Issued   (נכשל → UploadFailed)
   → הבעלים מסמן Paid (באפליקציה, דרך WF13 update)
 ```
 
@@ -87,7 +86,7 @@ flowchart LR
 ```
 POST /webhook/lead → WF2: כפילות? → Status = New
   → WF3 (כל 3 שעות, ליד אחד): מייל קר → Contacted   (נכשל → EmailFailed)
-  → WF4 (כל 30 דק'): תשובה במייל מאותה כתובת → Replied + התראת טלגרם לבעלים
+  → WF4 (כל 3 שעות): תשובה במייל מאותה כתובת → Replied + התראת טלגרם לבעלים
 ```
 
 ## טיפול בשגיאות (דרישת הקורס: לפחות אחד בכל אוטומציה)

@@ -67,7 +67,7 @@ Do not change anything else.
 
 ## פרסום
 
-Lovable → Publish. פורסם ב-Lovable (פרויקט "Shlomi Electronics Hub", shlomi-erp) וכובה אחרי ההגשה, ספטמבר 2026. הכתובת רשומה ב-README ובתסריט ההדגמה. ה-webhook פתוח ל-CORS (`allowedOrigins: *`) ב-WF13, אז אין צורך ב-proxy.
+Lovable → Publish. ה-webhook פתוח ל-CORS (`allowedOrigins: *`) ב-WF13, אז אין צורך ב-proxy.
 
 ## הערת אבטחה להצגה
 
